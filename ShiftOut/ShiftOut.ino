@@ -1,107 +1,52 @@
 /*
-This tests my board with 2 8-segment displays and
-2 74hc595n in daisy chain
-
-     -    A - 7
-F   | |   B - 1
-     -    G - 0
-E   | |   C - 6
-     -.   D - 2
-          E - 4
-          F - 5
-          DP- 3
+Adafruit Arduino - Lesson 4. 8 LEDs and a Shift Register
 */
-                   // 74hc595 pin 16 (VCC)
-                   // 74hc595 pin 15 (Q0 - output 0)
-int dataPin = 8;   // 74hc595 pin 14 (DS)
-                   // 74hc595 pin 13 (OE! output enable active low)
-int latchPin = 12; // 74hc595 pin 12 (SH_CP latch)
-int clockPin = 11; // 74hc595 pin 11 (ST_CP clock)
-int mrestPin = 2;  // 74hc595 pin 13 (MR! master reset active low)
+
+int latchPin = 11; // 74hc595 pin 12
+int clockPin = 12; // 74hc595 pin 11
+int dataPin = 10;  // 74hc595 pin 15
 
 byte leds = 0;
 bool l = false;
 
-// THESE ALL WORK OF SHITOUT WITH MSBFIRST AND THE 74HC595
-// IS CONNECTED TO 7SEG DISPLAY'S LIKE THIS:
-// Q0 - seg a
-// ...
-// Q7 - seg dp
-//         segments:   .gfedcba
-byte dec_digits[] = {0b00000110,
-                     0b01011011,
-                     0b01001111,
-                     0b01100110,
-                     0b01101101,
-                     0b01111100,
-                     0b00000111,
-                     0b01111111,
-                     0b01101111,
-                     0b00111111 };
+byte dec_digits[] = {0b11000000,0b11111001,0b10100100,0b10110000,0b10011001,0b10010010,0b10000011,0b11111000,0b10000000,0b10011000 };
 
 void setup() 
 {
-  Serial.begin(115200);
   pinMode(latchPin, OUTPUT);
   pinMode(dataPin, OUTPUT);  
   pinMode(clockPin, OUTPUT);
-  pinMode(mrestPin, OUTPUT);
   pinMode(13, OUTPUT);
-  
-  digitalWrite(mrestPin, LOW);
-  digitalWrite(latchPin, LOW);
-  delay(5);
-  digitalWrite(mrestPin, HIGH);
-  digitalWrite(latchPin, HIGH);
-  Serial.println("Started");
+  shiftOut(dataPin, clockPin, LSBFIRST, 0b00000000);
+  shiftOut(dataPin, clockPin, LSBFIRST, 0b00000000);
 }
 
 void loop() {
-  Serial.println("Looping...");
+
+  /*for (int tensColumn = 0; tensColumn < 10; tensColumn++) {
+    for (int onesColumn = 0; onesColumn < 10; onesColumn++) {
+      // take the latchPin low so 
+      // the LEDs don't change while you're sending in bits:
+      digitalWrite(latchPin, LOW);
+      // shift out the bits:
+      shiftOut(dataPin, clockPin, LSBFIRST, dec_digits[onesColumn]);
+      shiftOut(dataPin, clockPin, LSBFIRST, dec_digits[tensColumn]); 
+      //take the latch pin high so the LEDs will light up:
+      digitalWrite(latchPin, HIGH);
+      // pause before next value:
+      delay(100);
+    }
+  }*/
   byte b = 0;
-    
   for ( int x = 0; x < 8; x++ )
   {
     bitSet(b, x);
-    Serial.print("Writing byte:");
-    Serial.print(x);
-    Serial.print(" ");
-    Serial.println(b, BIN);
-    
+    shiftOut(dataPin, clockPin, MSBFIRST, b);
     delay(150);
-    
-    digitalWrite(latchPin, LOW);
-    delay(1);
-    shiftOut(dataPin, clockPin, LSBFIRST, b);
-    delay(1);
-    digitalWrite(latchPin, HIGH);
-
-    
-    delay(1000);
     b = 0;
   }
-  
-    
-  delay(2000);
-  for ( int x = 0; x < 10; x++ )
-  {
-    Serial.print("Writing number:");
-    Serial.print(x);
-    Serial.print(" ");
-    Serial.println(dec_digits[x], BIN);
-    
-    digitalWrite(latchPin, LOW);
-    delay(5);
-    shiftOut(dataPin, clockPin, MSBFIRST, dec_digits[x]);
-    delay(5);
-    digitalWrite(latchPin, HIGH);
-    
-    delay(1000);
-  }
-  delay(500);
   l = !l;
   digitalWrite(13, l);
-
 }
 
 
